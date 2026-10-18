@@ -17,6 +17,14 @@ import org.kde.ki18n
 Kirigami.AbstractCard {
     id: root
 
+    background: Rectangle {
+        radius: 16
+        color: root.checked ? Qt.alpha(root.palette.highlight, 0.14)
+            : root.hovered ? Qt.alpha(root.palette.text, 0.06) : root.palette.base
+        border.width: root.checked || root.visualFocus ? 2 : 1
+        border.color: root.checked || root.visualFocus ? root.palette.highlight : Qt.alpha(root.palette.text, 0.13)
+    }
+
     required property string itemName
     required property var iconSource
     required property string itemDescription
@@ -79,7 +87,7 @@ Kirigami.AbstractCard {
                 id: wallpaperImage
 
                 anchors.fill: parent
-                radius: Kirigami.Units.cornerRadius
+                radius: 14
 
                 fillMode: Image.PreserveAspectCrop
                 source: root.backgroundImage
@@ -228,7 +236,7 @@ Kirigami.AbstractCard {
                 anchors.centerIn: parent
                 width: pipeWireSourceItem.paintedRect.width
                 height: pipeWireSourceItem.paintedRect.height
-                radius: Kirigami.Units.cornerRadius
+                radius: 14
                 shadow.size: 2
                 color: Kirigami.Theme.textColor
                 border.color: Kirigami.Theme.textColor

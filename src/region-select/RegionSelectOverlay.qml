@@ -1,4 +1,5 @@
 import QtQuick
+import FormaPortal 1.0
 import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami

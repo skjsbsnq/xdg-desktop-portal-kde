@@ -1,4 +1,5 @@
 import QtQuick
+import FormaPortal 1.0
 import org.kde.kirigami as Kirigami
 
 Kirigami.Padding {
@@ -12,10 +13,10 @@ Kirigami.Padding {
         anchors.fill: parent
         z: -1
 
-        radius: Kirigami.Units.mediumSpacing / 2 + border.width
+        radius: 14 + border.width
 
-        color: Qt.alpha(Kirigami.Theme.backgroundColor, 0.85)
-        border.color: Qt.alpha(Kirigami.Theme.textColor, 0.2)
+        color: Qt.alpha(Theme.colors.window, 0.85)
+        border.color: Qt.alpha(Theme.colors.text, 0.2)
         border.width: 1
     }
 }

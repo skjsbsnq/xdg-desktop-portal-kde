@@ -33,8 +33,8 @@ PortalDialog {
     height: contentHeight
 
     Component.onCompleted: {
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Ok).text = KI18n.i18nc("@action:button Allow the application to monitor input", "Allow");
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Cancel).text = KI18n.i18nc("@action:button Deny the application's request to monitor input", "Deny");
+        acceptButtonText = KI18n.i18nc("@action:button Allow the application to monitor input", "Allow");
+        rejectButtonText = KI18n.i18nc("@action:button Deny the application's request to monitor input", "Deny");
     }
 }
 

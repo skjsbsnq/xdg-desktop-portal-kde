@@ -1,453 +1,277 @@
 /*
- *  SPDX-FileCopyrightText: 2021 Aleix Pol Gonzalez <aleixpol@kde.org>
- *  SPDX-FileCopyrightText: 2021-2024 Devin Lin <devin@kde.org>
- *  SPDX-FileCopyrightText: 2025 Harald Sitter <sitter@kde.org>
- *
- *  SPDX-License-Identifier: LGPL-2.0-or-later
+ * SPDX-License-Identifier: LGPL-2.0-or-later
+ * Forma window shell. Keeps the KDE portal's public properties and signals intact.
  */
-
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import QtQuick.Templates as T
+import FormaPortal 1.0
+import Forma 1.0 as FormaStyle
 import org.kde.kirigami as Kirigami
-import Qt5Compat.GraphicalEffects
 
 pragma ComponentBehavior: Bound
 
 Kirigami.AbstractApplicationWindow {
     id: root
-
     title: mainText
-    /**
-     * Main text of the dialog.
-     */
     property string mainText: title
-
-    /**
-     * Subtitle of the dialog.
-     */
     property string subtitle: ""
-
-    /**
-     * This property holds the icon used in the dialog.
-     */
     property string iconName: ""
-
-    /**
-     * This property holds the list of actions for this dialog.
-     *
-     * Each action will be rendered as a button that the user will be able
-     * to click.
-     */
     property list<T.Action> actions
-
     default property Item mainItem
-
-    /*
-        When true the main content area will be wrapped in a ScrollView. Prefer this whenever you may need the content
-        to scroll. Adding scrollbars any other way may lead to margins being added twice and other visual glitches.
-    */
     property bool scrollable: false
-
-    /**
-     * Sits below the mainText and subtitle but above the content separator (visually part of the header)
-     */
     property Item headerItem
-
-    /**
-     * Sits above the dialogButtonBox but below the content separator (visually part of the footer)
-     */
     property Item footerItem
-
-    /**
-     * This property holds the QQC2.DialogButtonBox used in the footer of the dialog.
-     */
-    readonly property QQC2.DialogButtonBox dialogButtonBox: footerButtonBox
-
-    /**
-     * Provides dialogButtonBox.standardButtons
-     *
-     * Useful to be able to set it as dialogButtonBox will be null as the object gets built
-     */
+    readonly property QQC2.DialogButtonBox dialogButtonBox: buttons
     property var standardButtons: QQC2.DialogButtonBox.Ok | QQC2.DialogButtonBox.Cancel
-
-    /**
-     * An optional content item that will be placed left of the action buttons in the footer of the dialog.
-    */
     property Item dialogButtonBoxLeftItem
-
-    /**
-     * Controls whether the accept button is enabled
-     */
     property bool acceptable: true
-
-    /**
-     * The layout of the action buttons in the footer of the dialog.
-     *
-     * By default, if there are more than 3 actions, it will have `Qt.Vertical`.
-     *
-     * Otherwise, with zero to 2 actions, it will have `Qt.Horizontal`.
-     *
-     * This will only affect mobile dialogs.
-     */
-    property int /*Qt.Orientation*/ layout: actions.length > 3 ? Qt.Vertical : Qt.Horizontal
-
-    /*!
-        \qmlproperty bool PortalDialog::contentPadding
-        Whether to add padding around the main content area.
-        Ideally combined with content that doesn't have extra padding so things are flush between all elements.
-        When not using this, consider following the edgeSpacing property for padding so things are visually aligned.
-        Sometimes that is not desirable though. Evaluate on a per-use-case basis.
-    */
+    property string acceptButtonText: ""
+    property string rejectButtonText: ""
+    property int layout: actions.length > 3 ? Qt.Vertical : Qt.Horizontal
     property bool contentPadding: true
+    readonly property real edgeSpacing: 24
+    readonly property real contentWidth: Math.max(480, header.implicitWidth + 48,
+        (root.mainItem?.implicitWidth ?? 0) + (root.contentPadding ? 48 : 0),
+        footer.implicitWidth + 48)
+    readonly property real contentHeight: chrome.height + column.implicitHeight + 16
+    property bool accepted: false
+    property bool formaFinished: false
+    property bool formaPresented: false
 
-    readonly property alias contentWidth: contentLayout.implicitWidth
-    readonly property alias contentHeight: contentLayout.implicitHeight
-    readonly property real edgeSpacing: Kirigami.Units.largeSpacing * 2
-
-    flags: Qt.Dialog | Qt.WindowCloseButtonHint | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
+    flags: Qt.Dialog | Qt.FramelessWindowHint
+    color: "transparent"
     visible: false
+    minimumWidth: 380
+    minimumHeight: 180
+    font.pixelSize: 13
+    palette.window: Theme.colors.window
+    palette.base: Theme.colors.base
+    palette.alternateBase: Theme.colors.alternateBase
+    palette.windowText: Theme.colors.text
+    palette.text: Theme.colors.text
+    palette.buttonText: Theme.colors.text
+    palette.button: Theme.colors.button
+    palette.light: Theme.colors.light
+    palette.midlight: Theme.colors.midlight
+    palette.mid: Theme.colors.mid
+    palette.dark: Theme.colors.dark
+    palette.highlight: Theme.colors.highlight
+    palette.highlightedText: Theme.colors.highlightedText
+    palette.placeholderText: Theme.colors.placeholderText
+    Kirigami.Theme.inherit: false
+    Kirigami.Theme.backgroundColor: Theme.colors.window
+    Kirigami.Theme.textColor: Theme.colors.text
+    Kirigami.Theme.highlightColor: Theme.colors.highlight
+    Kirigami.Theme.highlightedTextColor: Theme.colors.highlightedText
+    Kirigami.Theme.alternateBackgroundColor: Theme.colors.alternateBase
 
-    function present() : void {
-        Kirigami.Settings.isMobile ? showMaximized() : show()
-    }
+    function present(): void { formaPresented = true; show(); }
     signal accept()
     signal reject()
-    property bool accepted: false
-    onAccept: {
-        accepted = true
-        close()
-    }
-    onReject: close()
+    onAccept: { accepted = true; formaFinished = true; close(); }
+    onReject: { formaFinished = true; close(); }
+    onClosing: close => { if (!formaFinished) root.reject(); }
+    onVisibleChanged: { if (!visible && formaPresented && !formaFinished) root.reject(); }
 
-    onVisibleChanged: {
-        if (!visible && !accepted) {
-            console.log("rejecting")
-            root.reject()
+    background: Rectangle {
+        radius: root.visibility === Window.Maximized ? 0 : 20
+        color: root.palette.window
+        border.width: 1
+        border.color: Qt.alpha(root.palette.windowText, 0.15)
+        Rectangle {
+            x: 1; y: 1; width: parent.width - 2; height: Math.min(110, parent.height - 2)
+            radius: parent.radius
+            gradient: Gradient {
+                GradientStop { position: 0; color: Qt.alpha("white", 0.09) }
+                GradientStop { position: 1; color: "transparent" }
+            }
         }
-    }
-
-    Binding {
-        target: root.dialogButtonBox?.standardButton(QQC2.DialogButtonBox.Ok) ?? null
-        property: "enabled"
-        when: root.dialogButtonBox?.standardButtons & QQC2.DialogButtonBox.Ok
-        value: root.acceptable
     }
 
     Item {
-        id: contentLayout
-
         anchors.fill: parent
-
-        implicitWidth: control.implicitWidth
-        implicitHeight: control.implicitHeight
-
         focus: true
-        Keys.onEnterPressed: root.accept()
-        Keys.onReturnPressed: root.accept()
+        Keys.onEnterPressed: { if (root.acceptable) root.accept(); }
+        Keys.onReturnPressed: { if (root.acceptable) root.accept(); }
         Keys.onEscapePressed: root.reject()
 
         Item {
-            id: systemModalShadow
-            visible: Kirigami.Settings.isMobile
-            anchors.fill: parent
-
-            onWindowChanged: (window) => {
-                if (visible && window) {
-                    window.color = Qt.rgba(0, 0, 0, 0.5);
-                }
+            id: chrome
+            anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
+            height: 46
+            MouseArea {
+                anchors.fill: parent
+                onPressed: root.startSystemMove()
             }
-
-            Item {
-                id: windowItem
-                anchors.centerIn: parent
-                // margins for shadow
-                implicitWidth: Math.min(Screen.width, control.implicitWidth + 2 * Kirigami.Units.gridUnit)
-                implicitHeight: Math.min(Screen.height, control.implicitHeight + 2 * Kirigami.Units.gridUnit)
-
-                // shadow
-                RectangularGlow {
-                    id: glow
-                    anchors.topMargin: 1
-                    anchors.fill: parent
-                    cached: true
-                    glowRadius: 2
-                    cornerRadius: Kirigami.Units.gridUnit
-                    spread: 0.1
-                    color: Qt.rgba(0, 0, 0, 0.4)
-                }
-            }
-        }
-
-        QQC2.Control {
-            id: control
-            anchors.fill: Kirigami.Settings.isMobile ? undefined : parent
-            anchors.centerIn: Kirigami.Settings.isMobile ? parent : undefined
-            anchors.margins: Kirigami.Settings.isMobile ? glow.cornerRadius : 0
-            topPadding: 0
-            bottomPadding: 0
-            rightPadding: 0
-            leftPadding: 0
-
-            background: Item {
-                visible: Kirigami.Settings.isMobile
-
-                Rectangle { // border
-                    anchors.fill: parent
-                    anchors.margins: -1
-                    radius: Kirigami.Units.largeSpacing + 1
-                    color: Qt.darker(Kirigami.Theme.backgroundColor, 1.5)
-                }
-                Rectangle { // background colour
-                    anchors.fill: parent
-                    radius: Kirigami.Units.largeSpacing
-                    color: Kirigami.Theme.backgroundColor
-                }
-            }
-
-            contentItem: ColumnLayout {
-                id: column
-                spacing: 0
-
-                Kirigami.Separator {
-                    // Makes no sense on mobile because we don't run flush against a window edge at the top
-                    visible: !Kirigami.Settings.isMobile
-                    Layout.fillWidth: true
-                }
-
-                QQC2.Control {
-                    id: headerControl
-
-                    Layout.fillWidth: true
-
-                    visible: visibleChildren.length > 0
-
-                    topPadding: root.edgeSpacing
-                    bottomPadding: root.edgeSpacing
-                    leftPadding: root.edgeSpacing
-                    rightPadding: root.edgeSpacing
-
-                    contentItem: ColumnLayout {
-                        spacing: headerControl.topPadding
-                        visible: visibleChildren.length > 0
-
-                        RowLayout {
-                            id: headerRow
-
-                            visible: titleHeading.text.length > 0 || subtitleLabel.text.length > 0 || icon.source
-
-                            Layout.fillWidth: true
-                            spacing: Kirigami.Units.largeSpacing
-
-                            Kirigami.Icon {
-                                id: icon
-                                visible: source
-                                implicitWidth: Kirigami.Units.iconSizes.medium
-                                implicitHeight: Kirigami.Units.iconSizes.medium
-
-                                source: root.iconName
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-
-                                spacing: Kirigami.Units.smallSpacing
-
-                                Kirigami.Heading {
-                                    id: titleHeading
-                                    Layout.fillWidth: true
-                                    level: 2
-                                    wrapMode: Text.Wrap
-                                    textFormat: Text.RichText
-                                    elide: Text.ElideRight
-                                    text: root.mainText
-                                }
-
-                                QQC2.Label {
-                                    id: subtitleLabel
-                                    Layout.fillWidth: true
-                                    wrapMode: Text.Wrap
-                                    elide: Text.ElideRight
-                                    textFormat: Text.RichText
-                                    visible: text.length > 0
-                                    text: root.subtitle
-                                }
-                            }
+            Row {
+                anchors.left: parent.left; anchors.leftMargin: 17
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 8
+                Repeater {
+                    model: ["#ff5f57", "#febc2e", "#28c840"]
+                    delegate: Rectangle {
+                        id: dot
+                        required property string modelData
+                        required property int index
+                        width: 13; height: 13; radius: 7
+                        color: modelData
+                        border.width: 1; border.color: Qt.alpha("black", 0.08)
+                        Accessible.role: Accessible.Button
+                        Accessible.name: index === 0 ? qsTr("Close") : index === 1 ? qsTr("Minimize") : qsTr("Zoom")
+                        Accessible.onPressAction: clickArea.clicked(null)
+                        QQC2.ToolTip.text: Accessible.name
+                        QQC2.ToolTip.visible: clickArea.containsMouse
+                        Text {
+                            anchors.centerIn: parent
+                            text: dot.index === 0 ? "×" : dot.index === 1 ? "−" : "+"
+                            font.pixelSize: 12; color: "#47251c"
+                            visible: clickArea.containsMouse
                         }
-
-                        QQC2.Control {
-                            topPadding: 0
-                            rightPadding: 0
-                            bottomPadding: 0
-                            leftPadding: 0
-
-                            Layout.fillWidth: true
-                            contentItem: root.headerItem
-                            visible: root.headerItem?.visible ?? false
+                        MouseArea {
+                            id: clickArea
+                            anchors.fill: parent; hoverEnabled: true
+                            onClicked: {
+                                if (dot.index === 0) root.reject();
+                                else if (dot.index === 1) root.showMinimized();
+                                else root.visibility === Window.Maximized ? root.showNormal() : root.showMaximized();
+                            }
                         }
                     }
                 }
+            }
+            QQC2.Label {
+                anchors.centerIn: parent
+                width: Math.max(0, parent.width - 190)
+                text: root.title
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                font.pixelSize: 13; font.weight: Font.DemiBold
+                textFormat: Text.PlainText
+            }
+        }
 
-                Kirigami.Separator {
-                    visible: contentsControl.visible
-                    Layout.leftMargin: -control.leftPadding
-                    Layout.rightMargin: -control.rightPadding
-                    Layout.fillWidth: true
-                }
+        ColumnLayout {
+            id: column
+            anchors.top: chrome.bottom; anchors.bottom: parent.bottom
+            anchors.left: parent.left; anchors.right: parent.right
+            anchors.margins: 1
+            spacing: 0
 
-                Component {
-                    id: contentComponent
-
-                    QQC2.Control {
-                        topPadding: root.contentPadding ? root.edgeSpacing : undefined
-                        bottomPadding: topPadding
-                        leftPadding: topPadding
-                        rightPadding: topPadding
-
-                        Kirigami.Theme.colorSet: Kirigami.Theme.View
-                        background: Rectangle {
-                            color: Kirigami.Theme.backgroundColor
+            QQC2.Control {
+                id: header
+                Layout.fillWidth: true
+                padding: root.edgeSpacing
+                topPadding: 12
+                visible: root.mainText.length > 0 || root.subtitle.length > 0 || root.headerItem !== null
+                contentItem: ColumnLayout {
+                    spacing: 16
+                    RowLayout {
+                        spacing: 16
+                        Layout.fillWidth: true
+                        Kirigami.Icon {
+                            visible: root.iconName.length > 0
+                            source: root.iconName
+                            implicitWidth: 40; implicitHeight: 40
                         }
+                        ColumnLayout {
+                            spacing: 8
+                            Layout.fillWidth: true
+                            QQC2.Label {
+                                Layout.fillWidth: true
+                                text: root.mainText
+                                visible: text.length > 0
+                                font.pixelSize: 20; font.weight: Font.DemiBold
+                                wrapMode: Text.WordWrap
+                                textFormat: Text.RichText
+                            }
+                            QQC2.Label {
+                                Layout.fillWidth: true
+                                text: root.subtitle
+                                visible: text.length > 0
+                                color: Qt.alpha(root.palette.windowText, 0.65)
+                                wrapMode: Text.WordWrap
+                                textFormat: Text.RichText
+                            }
+                        }
+                    }
+                    QQC2.Control {
+                        Layout.fillWidth: true
+                        padding: 0
+                        visible: root.headerItem?.visible ?? false
+                        contentItem: root.headerItem
+                    }
+                }
+            }
+
+            Loader {
+                id: body
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: root.mainItem !== null
+                sourceComponent: root.scrollable ? scrollComponent : contentComponent
+            }
+            Component {
+                id: contentComponent
+                QQC2.Control {
+                    padding: root.contentPadding ? root.edgeSpacing : 0
+                    topPadding: root.contentPadding ? 12 : 0
+                    bottomPadding: root.contentPadding ? 12 : 0
+                    contentItem: root.mainItem
+                    background: Rectangle { color: Qt.alpha(root.palette.base, 0.5) }
+                }
+            }
+            Component {
+                id: scrollComponent
+                QQC2.ScrollView {
+                    implicitHeight: Math.min(420, scrollBody.implicitHeight)
+                    contentWidth: availableWidth
+                    clip: true
+                    QQC2.Control {
+                        id: scrollBody
+                        width: parent.width
+                        padding: root.contentPadding ? root.edgeSpacing : 0
                         contentItem: root.mainItem
                     }
+                    background: Rectangle { color: Qt.alpha(root.palette.base, 0.5) }
                 }
+            }
 
-                Component {
-                    id: scrollComponent
-
-                    QQC2.ScrollView {
-                        id: scrollView
-                        contentWidth: availableWidth
-
-                        Kirigami.Theme.colorSet: Kirigami.Theme.View
-                        background: Rectangle {
-                            color: Kirigami.Theme.backgroundColor
-                        }
-
-                        Loader {
-                            id: scrollContentLoader
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-
-                            sourceComponent: contentComponent
-                        }
+            QQC2.Control {
+                id: footer
+                Layout.fillWidth: true
+                padding: root.edgeSpacing
+                topPadding: 16; bottomPadding: 16
+                contentItem: ColumnLayout {
+                    spacing: 16
+                    QQC2.Control {
+                        Layout.fillWidth: true
+                        padding: 0
+                        visible: root.footerItem?.visible ?? false
+                        contentItem: root.footerItem
                     }
-                }
-
-                // Main content area, to be provided by the implementation
-                Loader {
-                    id: contentsControl
-
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.leftMargin: -control.leftPadding
-                    Layout.rightMargin: -control.rightPadding
-
-                    sourceComponent: root.scrollable ? scrollComponent : contentComponent
-
-                    // make sure we don't add padding if there is no content
-                    visible: root.mainItem ?? false
-                }
-
-                Kirigami.Separator {
-                    visible: contentsControl.visible && footerControl.visible
-                    Layout.leftMargin: -control.leftPadding
-                    Layout.rightMargin: -control.rightPadding
-                    Layout.fillWidth: true
-                }
-
-                QQC2.Control {
-                    id: footerControl
-
-                    Layout.fillWidth: true
-                    visible: visibleChildren.length > 0
-
-                    topPadding: root.edgeSpacing
-                    bottomPadding: root.edgeSpacing
-                    leftPadding: root.edgeSpacing
-                    rightPadding: root.edgeSpacing
-
-                    contentItem: ColumnLayout {
-                        visible: visibleChildren.length > 0
-
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 16
                         QQC2.Control {
-                            topPadding: 0
-                            rightPadding: 0
-                            bottomPadding: 0
-                            leftPadding: 0
-
-                            Layout.fillWidth: true
-                            contentItem: root.footerItem
-                            visible: root.footerItem?.visible ?? false
+                            visible: root.dialogButtonBoxLeftItem?.visible ?? false
+                            padding: 0
+                            contentItem: root.dialogButtonBoxLeftItem
                         }
-
-                        FlexboxLayout {
-                            wrap: FlexboxLayout.Wrap
-                            visible: visibleChildren.length > 0
-                            rowGap: Kirigami.Units.smallSpacing
-
-                            // WARNING: In Qt 6.10.0 there is a problem with fillHeight/Width not correctly laying out items when wrapped.
-                            // Be super careful when making changes to the layout guides in the containers. Thoroughly test window resizing!
-
-                            implicitHeight: {
-                                // Height calculation in Qt 6.10.0 is a bit buggy. Help it a bit.
-                                // If the buttonbox is below the left container we are in wrap mode and must take their
-                                // combined height. Otherwise we are in row mode and must take the maximum height.
-                                // https://bugreports.qt.io/browse/QTBUG-141400
-                                if (footerButtonBox.y != leftContainer.y) { // different y means different row
-                                    return footerButtonBox.implicitHeight + leftContainer.implicitHeight + rowGap
-                                }
-                                return Math.max(footerButtonBox.implicitHeight, leftContainer.implicitHeight)
-                            }
-                            // Similarly prevent the minimumHeight guide from being wrong
-                            Layout.minimumHeight: Math.min(Layout.minimumHeight, implicitHeight)
-
-                            QQC2.Container {
-                                id: leftContainer
-
-                                Layout.fillHeight: true // make sure the content gets placed centered by making sure we occupy the available height
-                                Layout.minimumHeight: implicitHeight
-
-                                leftPadding: 0
-                                rightPadding: 0
-                                topPadding: 0
-                                bottomPadding: 0
-                                contentItem: root.dialogButtonBoxLeftItem
-                                visible: root.dialogButtonBoxLeftItem?.visible ?? false
-                            }
-
-                            QQC2.DialogButtonBox {
-                                id: footerButtonBox
-
-                                Layout.fillWidth: true // make sure the content gets placed right by making sure we occupy the available width
-                                Layout.minimumWidth: implicitWidth
-                                Layout.minimumHeight: implicitHeight
-
-                                leftPadding: 0
-                                rightPadding: 0
-                                topPadding: 0
-                                bottomPadding: 0
-                                visible: count > 0 || root.actions.length > 0
-
-                                standardButtons: {
-                                    if (Kirigami.Settings.isMobile) {
-                                        // ensure we never have no buttons, we always must have the cancel button available
-                                        return (root.standardButtons === QQC2.DialogButtonBox.NoButton) ? QQC2.DialogButtonBox.Cancel : root.standardButtons
-                                    }
-                                    return root.standardButtons
-                                }
-
-                                onAccepted: root.accept()
-                                onRejected: root.reject()
-
-                                Repeater {
-                                    model: root.actions
-
-                                    delegate: QQC2.Button {
-                                        required property var modelData
-                                        action: modelData
-                                    }
+                        Item { Layout.fillWidth: true }
+                        FormaStyle.DialogButtonBox {
+                            id: buttons
+                            formaAcceptLabel: root.acceptButtonText
+                            formaRejectLabel: root.rejectButtonText
+                            standardButtons: root.standardButtons
+                            onAccepted: { if (root.acceptable) root.accept(); }
+                            onRejected: root.reject()
+                            Repeater {
+                                model: root.actions
+                                delegate: QQC2.Button {
+                                    required property var modelData
+                                    action: modelData
                                 }
                             }
                         }
@@ -455,5 +279,11 @@ Kirigami.AbstractApplicationWindow {
                 }
             }
         }
+    }
+    Binding {
+        target: root.dialogButtonBox?.standardButton(QQC2.DialogButtonBox.Ok) ?? null
+        property: "enabled"
+        when: (root.standardButtons & QQC2.DialogButtonBox.Ok) !== 0
+        value: root.acceptable
     }
 }

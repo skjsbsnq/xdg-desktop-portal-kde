@@ -48,6 +48,10 @@ set(xdg_desktop_portal_kde_SRCS
     desktopportal.h
     email.cpp
     email.h
+    formastyle.cpp
+    formastyle.h
+    formafilepicker.cpp
+    formafilepicker.h
     filechooser.cpp
     filechooser.h
     globalshortcuts.cpp globalshortcuts.h
@@ -337,6 +341,7 @@ PUBLIC
     Qt::DBus
     Qt::Concurrent
     Qt::PrintSupport
+    Qt::QuickControls2
     Qt::QuickWidgets
     Qt::Widgets
     Qt::WaylandClient
@@ -373,3 +378,13 @@ install(FILES
 
 ecm_qt_install_logging_categories(EXPORT XDPKDE FILE xdp-kde.categories DESTINATION ${KDE_INSTALL_LOGGINGCATEGORIESDIR})
 
+
+# Forma controls are private resources of this fork, never a global desktop theme.
+file(GLOB FORMA_STYLE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/forma/Forma/*.qml")
+qt_add_resources(xdg-desktop-portal-kde-internal forma_style
+    PREFIX "/qt/qml" BASE "${CMAKE_CURRENT_SOURCE_DIR}/forma"
+    FILES ${FORMA_STYLE_FILES} forma/Forma/qmldir forma/fonts/InterVariable.ttf forma/fonts/Inter-LICENSE.txt forma/check.svg)
+add_executable(forma-portal-preview EXCLUDE_FROM_ALL formapreview.cpp)
+target_link_libraries(forma-portal-preview PRIVATE xdg-desktop-portal-kde-internal xdg-desktop-portal-kde-internalplugin Qt::Test)
+
+install(FILES forma/fonts/Inter-LICENSE.txt DESTINATION ${KDE_INSTALL_DATADIR}/licenses/xdg-desktop-portal-forma)

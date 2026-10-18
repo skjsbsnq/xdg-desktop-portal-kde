@@ -4,6 +4,7 @@
 */
 
 import QtQuick
+import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 import org.kde.xdgdesktopportal
 import org.kde.ki18n
@@ -39,7 +40,7 @@ PortalDialog
             }
         }
     }
-    subtitle: app === "" ? KI18n.i18nc("@info:usagetip", "Only allow if you know which application made the request.") : undefined
+    subtitle: app === "" ? KI18n.i18nc("@info:usagetip", "Only allow if you know which application made the request.") : ""
 
     Item {
         implicitHeight: Kirigami.Units.gridUnit * 10
@@ -52,7 +53,7 @@ PortalDialog
     }
 
     Component.onCompleted: {
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Ok).text = KI18n.i18nc("@action:button Allow the application to change the wallpaper", "Allow")
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Cancel).text = KI18n.i18nc("@action:button Deny the applicatinon's request to change the wallpaper", "Deny")
+        acceptButtonText = KI18n.i18nc("@action:button Allow the application to change the wallpaper", "Allow")
+        rejectButtonText = KI18n.i18nc("@action:button Deny the applicatinon's request to change the wallpaper", "Deny")
     }
 }

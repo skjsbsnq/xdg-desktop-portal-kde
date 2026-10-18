@@ -64,8 +64,8 @@ PortalDialog {
     }
 
     Component.onCompleted: {
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Ok).text = KI18n.i18nc("@action:button Allow the application to access devices", "Allow")
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Cancel).text = KI18n.i18nc("@action:button Deny the application's request to access devices", "Deny")
+        acceptButtonText = KI18n.i18nc("@action:button Allow the application to access devices", "Allow")
+        rejectButtonText = KI18n.i18nc("@action:button Deny the application's request to access devices", "Deny")
     }
 }
 

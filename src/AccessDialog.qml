@@ -68,10 +68,10 @@ PortalDialog {
 
     Component.onCompleted: {
         if (root.acceptLabel.length > 0) {
-            dialogButtonBox.standardButton(QQC2.DialogButtonBox.Ok).text = Qt.binding(() => root.acceptLabel);
+            acceptButtonText = Qt.binding(() => root.acceptLabel);
         }
         if (root.rejectLabel.length > 0) {
-            dialogButtonBox.standardButton(QQC2.DialogButtonBox.Cancel).text = Qt.binding(() => root.rejectLabel);
+            rejectButtonText = Qt.binding(() => root.rejectLabel);
         }
     }
 }

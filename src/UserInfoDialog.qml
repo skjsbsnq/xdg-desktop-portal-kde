@@ -73,6 +73,6 @@ PortalDialog {
     }
 
     Component.onCompleted: {
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Ok).text = KI18n.i18nc("@action:button", "Share")
+        acceptButtonText = KI18n.i18nc("@action:button", "Share")
     }
 }

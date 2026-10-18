@@ -42,8 +42,8 @@ PortalDialog {
                 visible: text.length > 0
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideMiddle
-                text: root.dialog.launcherURL
-                onClicked: Qt.openUrlExternally(root.dialog.launcherURL)
+                text: root.launcherURL
+                onClicked: Qt.openUrlExternally(root.launcherURL)
             }
         }
     }

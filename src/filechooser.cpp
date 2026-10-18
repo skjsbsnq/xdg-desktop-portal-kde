@@ -9,6 +9,7 @@
 
 #include "filechooser.h"
 #include "filechooser_debug.h"
+#include "formafilepicker.h"
 #include "utils.h"
 
 #include <QDBusArgument>
@@ -334,6 +335,9 @@ void FileChooserPortal::OpenFile(const QDBusObjectPath &handle,
                                  uint &replyResponse,
                                  QVariantMap &replyResults)
 {
+    if (runFormaFilePicker(handle, app_id, parent_window, title, options, false, replyResponse, replyResults))
+        return;
+
     Q_UNUSED(app_id);
 
     qCDebug(XdgDesktopPortalKdeFileChooser) << "OpenFile called with parameters:";
@@ -517,6 +521,9 @@ void FileChooserPortal::SaveFile(const QDBusObjectPath &handle,
                                  uint &replyResponse,
                                  QVariantMap &replyResults)
 {
+    if (runFormaFilePicker(handle, app_id, parent_window, title, options, true, replyResponse, replyResults))
+        return;
+
     Q_UNUSED(app_id);
 
     qCDebug(XdgDesktopPortalKdeFileChooser) << "SaveFile called with parameters:";

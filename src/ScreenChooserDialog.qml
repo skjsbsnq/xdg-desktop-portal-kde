@@ -196,7 +196,7 @@ ScreenChooserDialogTemplate {
 
     Component.onCompleted: {
         if (root.multiple) {
-            dialogButtonBox.standardButton(QQC2.DialogButtonBox.Ok).text = KI18n.i18n("Share")
+            acceptButtonText = KI18n.i18n("Share")
         }
 
         // If there's only one thing in the list, pre-select it to save the user a click

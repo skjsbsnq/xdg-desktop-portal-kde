@@ -33,7 +33,7 @@ PortalDialog {
     }
 
     Component.onCompleted: {
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Ok).text = KI18n.i18nc("@action:button Allow the application to gain extra privileges", "Allow")
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Cancel).text = KI18n.i18nc("@action:button Deny the application gaining extra privileges", "Deny")
+        acceptButtonText = KI18n.i18nc("@action:button Allow the application to gain extra privileges", "Allow")
+        rejectButtonText = KI18n.i18nc("@action:button Deny the application gaining extra privileges", "Deny")
     }
 }

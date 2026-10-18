@@ -27,7 +27,7 @@ PortalDialog {
     mainText: appName === ""
         ? KI18n.i18nc("@info", "Allow an unidentifiable application to take a screenshot?")
         : KI18n.i18nc("@info %1 is the name of an application", "Allow %1 to take a screenshot?", appName)
-    subtitle: appName === "" ? KI18n.i18nc("@info:usagetip", "Only allow if you know which application made the request.") : undefined
+    subtitle: appName === "" ? KI18n.i18nc("@info:usagetip", "Only allow if you know which application made the request.") : ""
 
     acceptable: screenshot.valid
 
@@ -80,8 +80,8 @@ PortalDialog {
     }
 
     Component.onCompleted: {
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Ok).text = KI18n.i18nc("@action:button Allow the application to use the screenshot", "Allow")
-        dialogButtonBox.standardButton(QQC2.DialogButtonBox.Cancel).text = KI18n.i18nc("@action:button Deny the application's request to take a screenshot", "Deny")
+        acceptButtonText = KI18n.i18nc("@action:button Allow the application to use the screenshot", "Allow")
+        rejectButtonText = KI18n.i18nc("@action:button Deny the application's request to take a screenshot", "Deny")
     }
 
     actions: [

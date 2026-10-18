@@ -21,8 +21,6 @@ DynamicLauncherDialog::DynamicLauncherDialog(const QString &mainText,
            {
                {QStringLiteral("mainText"), mainText},
                {QStringLiteral("subtitle"), subtitle},
-               {QStringLiteral("launcherName"), name},
-               {QStringLiteral("launcherIcon"), icon},
                {QStringLiteral("launcherURL"), launcherURL},
                {QStringLiteral("dialog"), QVariant::fromValue(this)},
            });

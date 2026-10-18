@@ -6,6 +6,7 @@
  * SPDX-FileCopyrightText: 2016 Jan Grulich <jgrulich@redhat.com>
  */
 
+#include "formastyle.h"
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDBusConnection>
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
     qunsetenv("QT_WAYLAND_RECONNECT");
     QCoreApplication::setAttribute(Qt::AA_DisableSessionManager);
     QApplication a(argc, argv);
+    installFormaPortalStyle();
     a.setQuitOnLastWindowClosed(false);
     a.setQuitLockEnabled(false);
 
